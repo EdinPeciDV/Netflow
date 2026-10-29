@@ -7,3 +7,7 @@ Initialized the git repo and set up the full-stack project structure with NestJS
 ## Day 2: NestJS module structure + env config
 
 Introduced `@nestjs/config` and a typed env config file (`src/config/env.config.ts`) covering app, database, Redis, and JWT settings, with a `.env.example` for local setup. Broke the flat `app.module.ts` out into four dedicated modules: `HealthModule` (moved the health endpoint here with uptime reporting), `DevicesModule` (stub GET routes), `FlowsModule` (stub POST ingest endpoint), and `AuthModule` (stub login route). `AppModule` now wires them all together with `ConfigModule` globally registered. The architecture from `docs/architecture.md` is now reflected in the code layout.
+
+## Day 3: Docker Compose for local dev
+
+Added `docker-compose.yml` at the repo root with PostgreSQL 16-alpine and Redis 7-alpine services. Both containers have named volumes for data persistence, healthchecks, and restart policies. Updated `backend/.env.example` to use the Docker credentials (`netflow`/`netflow_dev`) so a fresh clone just needs `docker compose up -d` and a copied `.env` before running the backend.
