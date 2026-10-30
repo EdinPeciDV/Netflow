@@ -11,3 +11,7 @@ Introduced `@nestjs/config` and a typed env config file (`src/config/env.config.
 ## Day 3: Docker Compose for local dev
 
 Added `docker-compose.yml` at the repo root with PostgreSQL 16-alpine and Redis 7-alpine services. Both containers have named volumes for data persistence, healthchecks, and restart policies. Updated `backend/.env.example` to use the Docker credentials (`netflow`/`netflow_dev`) so a fresh clone just needs `docker compose up -d` and a copied `.env` before running the backend.
+
+## Day 4: TypeORM setup + User and Device entities
+
+Bumped the backend to NestJS 11 and corrected dependency mismatches (`@nestjs/config@12` and `@typescript-eslint@8` need NestJS 11 / ESLint 9 respectively). Installed `@nestjs/typeorm`, `typeorm`, and `pg`. Wired `TypeOrmModule.forRootAsync` into `AppModule` using `ConfigService` — `synchronize: false` so schema is migration-only. Added two TypeORM entities: `User` (id, email, passwordHash, role enum, timestamps) and `Device` (id, name, ipAddress, description, owner FK to User, timestamps).
