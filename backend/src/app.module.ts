@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { appConfig, dbConfig, jwtConfig, redisConfig } from './config/env.config';
 import { HealthModule } from './health/health.module';
+import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DevicesModule } from './devices/devices.module';
 import { FlowsModule } from './flows/flows.module';
@@ -28,6 +29,7 @@ import { FlowsModule } from './flows/flows.module';
       }),
     }),
     HealthModule,
+    UsersModule,
     AuthModule,
     DevicesModule,
     FlowsModule,
