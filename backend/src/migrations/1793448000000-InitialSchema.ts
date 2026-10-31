@@ -21,13 +21,14 @@ export class InitialSchema1793448000000 implements MigrationInterface {
 
     await queryRunner.query(`
       CREATE TABLE "devices" (
-        "id"          uuid              NOT NULL DEFAULT gen_random_uuid(),
-        "name"        character varying NOT NULL,
-        "ipAddress"   character varying NOT NULL,
-        "description" text,
+        "id"          uuid                        NOT NULL DEFAULT gen_random_uuid(),
+        "name"        character varying           NOT NULL,
+        "ipAddress"   character varying           NOT NULL,
+        "tokenHash"   character varying,
+        "lastSeenAt"  TIMESTAMP WITH TIME ZONE,
         "ownerId"     uuid,
-        "createdAt"   TIMESTAMP         NOT NULL DEFAULT now(),
-        "updatedAt"   TIMESTAMP         NOT NULL DEFAULT now(),
+        "createdAt"   TIMESTAMP                   NOT NULL DEFAULT now(),
+        "updatedAt"   TIMESTAMP                   NOT NULL DEFAULT now(),
         CONSTRAINT "PK_devices"      PRIMARY KEY ("id"),
         CONSTRAINT "FK_devices_owner" FOREIGN KEY ("ownerId")
           REFERENCES "users"("id") ON DELETE SET NULL

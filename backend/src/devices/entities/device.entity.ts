@@ -19,8 +19,11 @@ export class Device {
   @Column()
   ipAddress: string;
 
-  @Column({ nullable: true, type: 'text' })
-  description: string | null;
+  @Column({ nullable: true, select: false })
+  tokenHash: string | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  lastSeenAt: Date | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   owner: User | null;
