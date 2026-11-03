@@ -49,6 +49,10 @@ Wrapped up the scaffold phase. Created `UsersModule` — registers the User enti
 
 Added `GET /users/me` and `PATCH /users/me` — both JWT-protected — so authenticated users can fetch and update their own profile. `UpdateProfileDto` validates an optional email change. `UsersService` gained an `update` method that writes the change and re-fetches the row. `ClassSerializerInterceptor` on the controller, combined with `@Exclude()` on the `passwordHash` column in the entity, ensures the hash never leaks in any response. `UsersModule` now declares the controller so NestJS registers the routes.
 
+## Day 8: Roles guard and admin endpoint
+
+Added role-based access control on top of JWT auth. Created a `@Roles()` decorator (thin `SetMetadata` wrapper) and a `RolesGuard` that reads the metadata via `Reflector` and compares the required roles against `request.user.role`. The guard returns `true` when no roles are declared so it stays non-breaking for existing routes. `UsersService` gained `findAll()`. `UsersController` now exposes `GET /users` — admin-only — guarded by the class-level `JwtAuthGuard` (authentication) plus the new `RolesGuard` (authorisation). A viewer hitting that route gets a 403.
+
 ## Day 6: JWT authentication
 
 Kicked off the backend core phase with full JWT auth. Installed `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, and `bcrypt` (plus their TypeScript types). Added `LoginDto` and `RegisterDto` with `class-validator` decorators so the global `ValidationPipe` enforces shape at the boundary. Created `JwtStrategy` (passport-jwt) that validates the Bearer token and resolves the user from `UsersService`. Added `JwtAuthGuard` (thin `AuthGuard('jwt')` wrapper) ready to decorate any route. Rewrote `AuthService` — `register` hashes the password with bcrypt (10 rounds) and returns an access token; `login` verifies the hash and signs the same payload `{ sub, email, role }`. Extended `UsersService` with a `create` method. Wired everything into `AuthModule` using `JwtModule.registerAsync` pulling secret and expiry from `ConfigService`.
