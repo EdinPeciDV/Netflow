@@ -1,6 +1,7 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { IngestFlowDto } from './dto/ingest-flow.dto';
+import { QueryFlowsDto } from './dto/query-flows.dto';
 import { FlowsService } from './flows.service';
 
 @Controller('flows')
@@ -11,5 +12,15 @@ export class FlowsController {
   @Post('ingest')
   ingest(@Body() dto: IngestFlowDto) {
     return this.flowsService.ingest(dto);
+  }
+
+  @Get()
+  findMany(@Query() query: QueryFlowsDto) {
+    return this.flowsService.findMany(query);
+  }
+
+  @Get('stats')
+  stats(@Query('deviceId') deviceId?: string) {
+    return this.flowsService.stats(deviceId);
   }
 }
