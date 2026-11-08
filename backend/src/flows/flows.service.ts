@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Device } from '../devices/entities/device.entity';
+import { AggregateFlowsDto, BucketSize } from './dto/aggregate-flows.dto';
 import { IngestFlowDto } from './dto/ingest-flow.dto';
 import { QueryFlowsDto } from './dto/query-flows.dto';
 import { FlowRecord } from './entities/flow-record.entity';
@@ -76,6 +77,50 @@ export class FlowsService {
       totalBytes: raw?.totalBytes ?? '0',
       totalPackets: parseInt(raw?.totalPackets ?? '0', 10),
     };
+  }
+
+  async aggregate(query: AggregateFlowsDto): Promise<
+    { bucket: Date; flowCount: number; totalBytes: string; totalPackets: number }[]
+  > {
+    const unit = query.bucket ?? BucketSize.HOUR;
+
+    const qb = this.flowsRepo
+      .createQueryBuilder('fr')
+      .select(`date_trunc('${unit}', fr."startTime")`, 'bucket')
+      .addSelect('COUNT(fr.id)', 'flowCount')
+      .addSelect('SUM(fr.bytes)', 'totalBytes')
+      .addSelect('SUM(fr.packets)', 'totalPackets')
+      .groupBy(`date_trunc('${unit}', fr."startTime")`)
+      .orderBy('bucket', 'ASC');
+
+    if (query.deviceId) {
+      qb.leftJoin('fr.device', 'device').where('device.id = :deviceId', {
+        deviceId: query.deviceId,
+      });
+    }
+    if (query.startFrom) {
+      qb.andWhere('fr.startTime >= :startFrom', {
+        startFrom: new Date(query.startFrom),
+      });
+    }
+    if (query.endBefore) {
+      qb.andWhere('fr.startTime < :endBefore', {
+        endBefore: new Date(query.endBefore),
+      });
+    }
+
+    const rows = await qb.getRawMany<{
+      bucket: Date;
+      flowCount: string;
+      totalBytes: string;
+      totalPackets: string;
+    }>();
+    return rows.map((r) => ({
+      bucket: r.bucket,
+      flowCount: parseInt(r.flowCount, 10),
+      totalBytes: r.totalBytes ?? '0',
+      totalPackets: parseInt(r.totalPackets, 10),
+    }));
   }
 
   async ingest(dto: IngestFlowDto): Promise<{ received: number }> {
