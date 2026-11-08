@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AggregateFlowsDto } from './dto/aggregate-flows.dto';
 import { IngestFlowDto } from './dto/ingest-flow.dto';
 import { QueryFlowsDto } from './dto/query-flows.dto';
 import { FlowsService } from './flows.service';
@@ -22,5 +23,10 @@ export class FlowsController {
   @Get('stats')
   stats(@Query('deviceId') deviceId?: string) {
     return this.flowsService.stats(deviceId);
+  }
+
+  @Get('aggregate')
+  aggregate(@Query() query: AggregateFlowsDto) {
+    return this.flowsService.aggregate(query);
   }
 }
