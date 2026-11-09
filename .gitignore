@@ -29,3 +29,6 @@ backend/dist/
 
 # Vite
 frontend/dist/
+
+# Graphify knowledge graph (local only, never committed)
+graphify-out/
