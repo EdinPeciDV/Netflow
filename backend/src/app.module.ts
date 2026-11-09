@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { DevicesModule } from './devices/devices.module';
 import { FlowsModule } from './flows/flows.module';
 import { AlertRulesModule } from './alerts/alert-rules.module';
+import { AlertEventsModule } from './alerts/alert-events.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AlertRulesModule } from './alerts/alert-rules.module';
     DevicesModule,
     FlowsModule,
     AlertRulesModule,
+    AlertEventsModule,
   ],
 })
 export class AppModule {}
