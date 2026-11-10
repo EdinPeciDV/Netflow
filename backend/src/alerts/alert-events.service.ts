@@ -2,14 +2,39 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AlertEvent } from './entities/alert-event.entity';
-import { AlertMetric } from './entities/alert-rule.entity';
+import { AlertRule, AlertMetric } from './entities/alert-rule.entity';
 
 @Injectable()
 export class AlertEventsService {
   constructor(
     @InjectRepository(AlertEvent)
     private readonly repo: Repository<AlertEvent>,
+    @InjectRepository(AlertRule)
+    private readonly rulesRepo: Repository<AlertRule>,
   ) {}
+
+  async evaluate(
+    deviceId: string,
+    metric: AlertMetric,
+    value: number,
+  ): Promise<AlertEvent[]> {
+    const rules = await this.rulesRepo
+      .createQueryBuilder('r')
+      .where('r.enabled = :enabled', { enabled: true })
+      .andWhere('r.metric = :metric', { metric })
+      .andWhere('(r.deviceId = :deviceId OR r.deviceId IS NULL)', { deviceId })
+      .getMany();
+
+    const fired: AlertEvent[] = [];
+    for (const rule of rules) {
+      if (value > rule.threshold) {
+        fired.push(
+          await this.create({ alertRuleId: rule.id, deviceId, metric, value }),
+        );
+      }
+    }
+    return fired;
+  }
 
   async create(data: {
     alertRuleId: string;
