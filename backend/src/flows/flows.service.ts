@@ -6,6 +6,7 @@ import { AggregateFlowsDto, BucketSize } from './dto/aggregate-flows.dto';
 import { IngestFlowDto } from './dto/ingest-flow.dto';
 import { QueryFlowsDto } from './dto/query-flows.dto';
 import { FlowRecord } from './entities/flow-record.entity';
+import { FlowsGateway } from './flows.gateway';
 
 @Injectable()
 export class FlowsService {
@@ -14,6 +15,7 @@ export class FlowsService {
     private readonly flowsRepo: Repository<FlowRecord>,
     @InjectRepository(Device)
     private readonly devicesRepo: Repository<Device>,
+    private readonly gateway: FlowsGateway,
   ) {}
 
   async findMany(
@@ -145,6 +147,7 @@ export class FlowsService {
     );
 
     await this.flowsRepo.save(records);
+    this.gateway.broadcastFlows(records);
     return { received: records.length };
   }
 }
