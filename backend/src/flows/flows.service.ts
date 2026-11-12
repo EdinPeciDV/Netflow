@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AlertEventsService } from '../alerts/alert-events.service';
+import { AlertMetric } from '../alerts/entities/alert-rule.entity';
+import { AlertsGateway } from '../alerts/alerts.gateway';
 import { Device } from '../devices/entities/device.entity';
 import { AggregateFlowsDto, BucketSize } from './dto/aggregate-flows.dto';
 import { IngestFlowDto } from './dto/ingest-flow.dto';
@@ -16,6 +19,8 @@ export class FlowsService {
     @InjectRepository(Device)
     private readonly devicesRepo: Repository<Device>,
     private readonly gateway: FlowsGateway,
+    private readonly alertEventsService: AlertEventsService,
+    private readonly alertsGateway: AlertsGateway,
   ) {}
 
   async findMany(
@@ -148,6 +153,20 @@ export class FlowsService {
 
     await this.flowsRepo.save(records);
     this.gateway.broadcastFlows(records);
+
+    const totalBytes = records.reduce((sum, r) => sum + r.bytes, 0);
+    const totalPackets = records.reduce((sum, r) => sum + r.packets, 0);
+    const flowCount = records.length;
+
+    const fired = [
+      ...(await this.alertEventsService.evaluate(dto.deviceId, AlertMetric.BYTES_PER_WINDOW, totalBytes)),
+      ...(await this.alertEventsService.evaluate(dto.deviceId, AlertMetric.PACKETS_PER_WINDOW, totalPackets)),
+      ...(await this.alertEventsService.evaluate(dto.deviceId, AlertMetric.FLOW_COUNT_PER_WINDOW, flowCount)),
+    ];
+    for (const event of fired) {
+      this.alertsGateway.broadcastAlert(event);
+    }
+
     return { received: records.length };
   }
 }
