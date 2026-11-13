@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { AlertEvent } from './entities/alert-event.entity';
 import { AlertRule, AlertMetric } from './entities/alert-rule.entity';
 
@@ -11,6 +13,7 @@ export class AlertEventsService {
     private readonly repo: Repository<AlertEvent>,
     @InjectRepository(AlertRule)
     private readonly rulesRepo: Repository<AlertRule>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async evaluate(
@@ -18,15 +21,18 @@ export class AlertEventsService {
     metric: AlertMetric,
     value: number,
   ): Promise<AlertEvent[]> {
-    const rules = await this.rulesRepo
-      .createQueryBuilder('r')
-      .where('r.enabled = :enabled', { enabled: true })
-      .andWhere('r.metric = :metric', { metric })
-      .andWhere('(r.deviceId = :deviceId OR r.deviceId IS NULL)', { deviceId })
-      .getMany();
+    const cacheKey = `alert-rules:${metric}`;
+    let rules = await this.cache.get<AlertRule[]>(cacheKey);
+    if (!rules) {
+      rules = await this.rulesRepo.find({ where: { enabled: true, metric } });
+      await this.cache.set(cacheKey, rules, 30_000);
+    }
+    const applicable = rules.filter(
+      (r) => r.deviceId === null || r.deviceId === deviceId,
+    );
 
     const fired: AlertEvent[] = [];
-    for (const rule of rules) {
+    for (const rule of applicable) {
       if (value > rule.threshold) {
         fired.push(
           await this.create({ alertRuleId: rule.id, deviceId, metric, value }),
