@@ -33,10 +33,23 @@ export class AlertEventsService {
 
     const fired: AlertEvent[] = [];
     for (const rule of applicable) {
-      if (value > rule.threshold) {
-        fired.push(
-          await this.create({ alertRuleId: rule.id, deviceId, metric, value }),
-        );
+      if (value <= rule.threshold) continue;
+
+      // Suppress duplicate alerts for the same rule+device while the rule's
+      // cooldown is active, preventing alert storms when every ingest batch
+      // keeps breaching the threshold. cooldownSeconds <= 0 disables it.
+      const cooldownKey = `alert-cooldown:${rule.id}:${deviceId}`;
+      if (rule.cooldownSeconds > 0) {
+        const onCooldown = await this.cache.get(cooldownKey);
+        if (onCooldown) continue;
+      }
+
+      fired.push(
+        await this.create({ alertRuleId: rule.id, deviceId, metric, value }),
+      );
+
+      if (rule.cooldownSeconds > 0) {
+        await this.cache.set(cooldownKey, 1, rule.cooldownSeconds * 1000);
       }
     }
     return fired;
