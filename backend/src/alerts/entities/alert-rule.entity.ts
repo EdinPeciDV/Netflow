@@ -44,6 +44,9 @@ export class AlertRule {
   @Column({ default: true })
   enabled: boolean;
 
+  @Column({ type: 'int', default: 300 })
+  cooldownSeconds: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
