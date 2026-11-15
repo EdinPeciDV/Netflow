@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { AlertEvent } from './entities/alert-event.entity';
 import { AlertRule } from './entities/alert-rule.entity';
 import { AlertEventsService } from './alert-events.service';
@@ -7,7 +8,7 @@ import { AlertEventsController } from './alert-events.controller';
 import { AlertsGateway } from './alerts.gateway';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AlertEvent, AlertRule])],
+  imports: [TypeOrmModule.forFeature([AlertEvent, AlertRule]), AuthModule],
   providers: [AlertEventsService, AlertsGateway],
   controllers: [AlertEventsController],
   exports: [AlertEventsService, AlertsGateway],
