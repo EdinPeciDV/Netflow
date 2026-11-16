@@ -53,6 +53,14 @@ describe('FlowsGateway rooms', () => {
     expect(client.rooms).toEqual(new Set(['flows:all']));
   });
 
+  it('caps a single subscribe at 50 devices', async () => {
+    const client = makeClient(['flows:all']);
+    const deviceIds = Array.from({ length: 80 }, (_, i) => `d${i}`);
+    const res = await gateway.handleSubscribe(client as never, { deviceIds });
+    expect(res.subscribed).toHaveLength(50);
+    expect(client.rooms.size).toBe(50);
+  });
+
   it('restores the all-room and drops device rooms on unsubscribe', async () => {
     const client = makeClient(['flows:device:d1']);
     await gateway.handleUnsubscribe(client as never);

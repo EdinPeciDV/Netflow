@@ -13,6 +13,7 @@ import { FlowRecord } from './entities/flow-record.entity';
 
 const ALL_ROOM = 'flows:all';
 const DEVICE_ROOM_PREFIX = 'flows:device:';
+const MAX_SUBSCRIPTIONS = 50;
 const deviceRoom = (id: string) => `${DEVICE_ROOM_PREFIX}${id}`;
 
 @WebSocketGateway({ cors: { origin: '*' }, namespace: '/flows' })
@@ -48,7 +49,8 @@ export class FlowsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { deviceIds?: string[] },
   ) {
-    const ids = (body?.deviceIds ?? []).filter((id) => typeof id === 'string');
+    const ids = (body?.deviceIds ?? []).filter((id) => typeof id === 'string')
+      .slice(0, MAX_SUBSCRIPTIONS);
     if (ids.length === 0) return { subscribed: [] };
     await client.leave(ALL_ROOM);
     for (const id of ids) await client.join(deviceRoom(id));
