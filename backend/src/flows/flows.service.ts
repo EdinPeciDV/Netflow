@@ -152,7 +152,7 @@ export class FlowsService {
     );
 
     await this.flowsRepo.save(records);
-    this.gateway.broadcastFlows(records);
+    this.gateway.broadcastFlows(dto.deviceId, records);
 
     const totalBytes = records.reduce((sum, r) => sum + r.bytes, 0);
     const totalPackets = records.reduce((sum, r) => sum + r.packets, 0);
