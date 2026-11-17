@@ -42,4 +42,13 @@ netflow/
 
 ## Running Locally
 
-Coming soon — setup instructions will be added as the project takes shape.
+```bash
+# Start PostgreSQL and Redis
+docker compose up -d
+
+# Backend (NestJS)
+cd backend && npm install && npm run start:dev
+
+# Frontend (React + Vite), in a second terminal
+cd frontend && npm install && npm run dev
+```
