@@ -17,6 +17,7 @@ import { FlowsGateway } from './flows.gateway';
 
 type FakeClient = {
   rooms: Set<string>;
+  data: Record<string, unknown>;
   join: jest.Mock;
   leave: jest.Mock;
 };
@@ -25,6 +26,7 @@ const makeClient = (rooms: string[] = []): FakeClient => {
   const set = new Set(rooms);
   return {
     rooms: set,
+    data: {},
     join: jest.fn(async (r: string) => void set.add(r)),
     leave: jest.fn(async (r: string) => void set.delete(r)),
   };
@@ -75,5 +77,47 @@ describe('FlowsGateway rooms', () => {
     gateway.broadcastFlows('d1', records);
     expect(to).toHaveBeenCalledWith(['flows:all', 'flows:device:d1']);
     expect(emit).toHaveBeenCalledWith('flows:new', records);
+  });
+});
+
+describe('FlowsGateway subscribe rate limit', () => {
+  let gateway: FlowsGateway;
+  let now: jest.SpyInstance;
+
+  beforeEach(() => {
+    gateway = new FlowsGateway({ authenticate: jest.fn() } as never);
+    now = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+  });
+  afterEach(() => now.mockRestore());
+
+  it('rejects the 11th subscribe within the window', async () => {
+    const client = makeClient(['flows:all']);
+    for (let i = 0; i < 10; i++) {
+      const ok = await gateway.handleSubscribe(client as never, { deviceIds: ['d1'] });
+      expect(ok).toEqual({ subscribed: ['d1'] });
+    }
+    const res = await gateway.handleSubscribe(client as never, { deviceIds: ['d2'] });
+    expect(res).toEqual({ error: 'rate_limited', retryAfterMs: 10_000 });
+    expect(client.rooms.has('flows:device:d2')).toBe(false);
+  });
+
+  it('allows subscribing again once the window has passed', async () => {
+    const client = makeClient(['flows:all']);
+    for (let i = 0; i < 10; i++) {
+      await gateway.handleSubscribe(client as never, { deviceIds: ['d1'] });
+    }
+    now.mockReturnValue(1_000_000 + 10_000);
+    const res = await gateway.handleSubscribe(client as never, { deviceIds: ['d2'] });
+    expect(res).toEqual({ subscribed: ['d2'] });
+  });
+
+  it('tracks the limit per client', async () => {
+    const a = makeClient(['flows:all']);
+    const b = makeClient(['flows:all']);
+    for (let i = 0; i < 10; i++) {
+      await gateway.handleSubscribe(a as never, { deviceIds: ['d1'] });
+    }
+    const res = await gateway.handleSubscribe(b as never, { deviceIds: ['d1'] });
+    expect(res).toEqual({ subscribed: ['d1'] });
   });
 });
