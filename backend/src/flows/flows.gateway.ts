@@ -16,6 +16,8 @@ const DEVICE_ROOM_PREFIX = 'flows:device:';
 const MAX_SUBSCRIPTIONS = 50;
 const SUBSCRIBE_LIMIT = 10; // max flows:subscribe calls per client...
 const SUBSCRIBE_WINDOW_MS = 10_000; // ...within this sliding window
+const HEARTBEAT_INTERVAL_MS = 30_000; // send gateway:ping every 30 s
+const PONG_TIMEOUT_MS = 5_000; // disconnect if no pong within 5 s
 const deviceRoom = (id: string) => `${DEVICE_ROOM_PREFIX}${id}`;
 
 @WebSocketGateway({ cors: { origin: '*' }, namespace: '/flows' })
@@ -34,12 +36,36 @@ export class FlowsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     client.data.user = user;
+    client.data.pongReceived = true; // assume alive at connect
     await client.join(ALL_ROOM);
     console.log(`WS client connected: ${client.id} (${user.email})`);
+    this.scheduleHeartbeat(client);
   }
 
   handleDisconnect(client: Socket) {
+    clearTimeout(client.data.pingTimer as ReturnType<typeof setTimeout>);
+    clearTimeout(client.data.pongTimer as ReturnType<typeof setTimeout>);
     console.log(`WS client disconnected: ${client.id}`);
+  }
+
+  /** Sends gateway:ping; disconnects if no gateway:pong within PONG_TIMEOUT_MS. */
+  private scheduleHeartbeat(client: Socket): void {
+    client.data.pingTimer = setTimeout(() => {
+      client.data.pongReceived = false;
+      client.emit('gateway:ping');
+      client.data.pongTimer = setTimeout(() => {
+        if (!client.data.pongReceived) {
+          console.log(`WS client timed out (no pong): ${client.id}`);
+          client.disconnect(true);
+        }
+      }, PONG_TIMEOUT_MS);
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  @SubscribeMessage('gateway:pong')
+  handlePong(@ConnectedSocket() client: Socket) {
+    client.data.pongReceived = true;
+    this.scheduleHeartbeat(client);
   }
 
   /**
