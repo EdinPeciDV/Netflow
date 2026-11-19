@@ -20,6 +20,8 @@ type FakeClient = {
   data: Record<string, unknown>;
   join: jest.Mock;
   leave: jest.Mock;
+  emit: jest.Mock;
+  disconnect: jest.Mock;
 };
 
 const makeClient = (rooms: string[] = []): FakeClient => {
@@ -29,6 +31,8 @@ const makeClient = (rooms: string[] = []): FakeClient => {
     data: {},
     join: jest.fn(async (r: string) => void set.add(r)),
     leave: jest.fn(async (r: string) => void set.delete(r)),
+    emit: jest.fn(),
+    disconnect: jest.fn(),
   };
 };
 
@@ -77,6 +81,46 @@ describe('FlowsGateway rooms', () => {
     gateway.broadcastFlows('d1', records);
     expect(to).toHaveBeenCalledWith(['flows:all', 'flows:device:d1']);
     expect(emit).toHaveBeenCalledWith('flows:new', records);
+  });
+});
+
+describe('FlowsGateway heartbeat', () => {
+  let gateway: FlowsGateway;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    gateway = new FlowsGateway({ authenticate: jest.fn() } as never);
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('emits gateway:ping after 30 s', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000);
+    expect(client.emit).toHaveBeenCalledWith('gateway:ping');
+  });
+
+  it('disconnects if no pong arrives within 5 s after ping', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000); // ping fires
+    jest.advanceTimersByTime(5_000);  // pong timeout fires
+    expect(client.disconnect).toHaveBeenCalledWith(true);
+  });
+
+  it('does not disconnect when pong is received in time', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000); // ping fires
+    gateway.handlePong(client as never);
+    jest.advanceTimersByTime(5_000);  // pong timeout — but pong was received
+    expect(client.disconnect).not.toHaveBeenCalled();
   });
 });
 
