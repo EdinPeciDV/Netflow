@@ -14,6 +14,8 @@ import { AlertEvent } from './entities/alert-event.entity';
 const ALL_ROOM = 'alerts:all';
 const DEVICE_ROOM_PREFIX = 'alerts:device:';
 const MAX_SUBSCRIPTIONS = 50;
+const SUBSCRIBE_LIMIT = 10;
+const SUBSCRIBE_WINDOW_MS = 10_000;
 const deviceRoom = (id: string) => `${DEVICE_ROOM_PREFIX}${id}`;
 
 @WebSocketGateway({ cors: { origin: '*' }, namespace: '/alerts' })
@@ -45,6 +47,8 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() body: { deviceIds?: string[] },
   ) {
+    const retryAfterMs = this.checkSubscribeRate(client);
+    if (retryAfterMs > 0) return { error: 'rate_limited', retryAfterMs };
     const ids = (body?.deviceIds ?? [])
       .filter((id) => typeof id === 'string')
       .slice(0, MAX_SUBSCRIPTIONS);
@@ -52,6 +56,17 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await client.leave(ALL_ROOM);
     for (const id of ids) await client.join(deviceRoom(id));
     return { subscribed: ids };
+  }
+
+  private checkSubscribeRate(client: Socket): number {
+    const now = Date.now();
+    const hits: number[] = (client.data.subscribeHits ??= []);
+    while (hits.length && now - hits[0] >= SUBSCRIBE_WINDOW_MS) hits.shift();
+    if (hits.length >= SUBSCRIBE_LIMIT) {
+      return SUBSCRIBE_WINDOW_MS - (now - hits[0]);
+    }
+    hits.push(now);
+    return 0;
   }
 
   @SubscribeMessage('alerts:unsubscribe')
