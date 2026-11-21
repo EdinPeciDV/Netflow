@@ -91,4 +91,12 @@ export class AlertEventsService {
     if (!event) throw new NotFoundException('Alert event not found');
     return event;
   }
+
+  async acknowledge(id: string): Promise<AlertEvent | null> {
+    const event = await this.repo.findOne({ where: { id } });
+    if (!event) return null;
+    if (event.acknowledgedAt) return event;
+    event.acknowledgedAt = new Date();
+    return this.repo.save(event);
+  }
 }

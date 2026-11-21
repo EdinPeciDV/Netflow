@@ -38,4 +38,7 @@ export class AlertEvent {
   @Index()
   @CreateDateColumn()
   triggeredAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  acknowledgedAt: Date | null;
 }
