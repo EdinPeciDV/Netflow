@@ -26,7 +26,9 @@ NetFlow is a full-stack application for monitoring network traffic in real time.
 - Role-based access control
 - JWT-authenticated WebSocket gateways (`/flows`, `/alerts`)
 - Per-device Socket.io room subscriptions on `/flows` (rate-limited)
-- Server-side heartbeat on `/flows`: `gateway:ping` every 30 s, auto-disconnect on 5 s pong timeout
+- Server-side heartbeat on `/flows` and `/alerts`: `gateway:ping` every 30 s, auto-disconnect on 5 s pong timeout
+- Per-device Socket.io room subscriptions on `/alerts` (rate-limited)
+- Alert acknowledgement via WebSocket (`alerts:ack` → persisted `acknowledgedAt`, broadcast to subscribers)
 - Alert cooldown / deduplication backed by Redis
 - Dark mode UI
 - Docker / docker-compose deployment
