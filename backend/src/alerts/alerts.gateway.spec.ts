@@ -13,6 +13,10 @@ jest.mock('@nestjs/jwt', () => ({ JwtService: class JwtService {} }));
 
 import { AlertsGateway } from './alerts.gateway';
 
+const makeFakeAlertEvents = () => ({
+  acknowledge: jest.fn(),
+});
+
 type FakeClient = {
   rooms: Set<string>;
   data: Record<string, unknown>;
@@ -38,7 +42,10 @@ describe('AlertsGateway rooms', () => {
   let gateway: AlertsGateway;
 
   beforeEach(() => {
-    gateway = new AlertsGateway({ authenticate: jest.fn() } as never);
+    gateway = new AlertsGateway(
+      { authenticate: jest.fn() } as never,
+      makeFakeAlertEvents() as never,
+    );
   });
 
   it('leaves the all-room and joins device rooms on subscribe', async () => {
@@ -96,7 +103,10 @@ describe('AlertsGateway subscribe rate limit', () => {
   let now: jest.SpyInstance;
 
   beforeEach(() => {
-    gateway = new AlertsGateway({ authenticate: jest.fn() } as never);
+    gateway = new AlertsGateway(
+      { authenticate: jest.fn() } as never,
+      makeFakeAlertEvents() as never,
+    );
     now = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
   });
   afterEach(() => now.mockRestore());
@@ -130,5 +140,86 @@ describe('AlertsGateway subscribe rate limit', () => {
     }
     const res = await gateway.handleSubscribe(b as never, { deviceIds: ['d1'] });
     expect(res).toEqual({ subscribed: ['d1'] });
+  });
+});
+
+describe('AlertsGateway heartbeat', () => {
+  let gateway: AlertsGateway;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    gateway = new AlertsGateway(
+      { authenticate: jest.fn() } as never,
+      makeFakeAlertEvents() as never,
+    );
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('emits gateway:ping after 30 s', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000);
+    expect(client.emit).toHaveBeenCalledWith('gateway:ping');
+  });
+
+  it('disconnects if no pong arrives within 5 s after ping', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000);
+    jest.advanceTimersByTime(5_000);
+    expect(client.disconnect).toHaveBeenCalledWith(true);
+  });
+
+  it('does not disconnect when pong is received in time', () => {
+    const client = makeClient();
+    client.data.pongReceived = true;
+    (gateway as any).scheduleHeartbeat(client);
+    jest.advanceTimersByTime(30_000);
+    gateway.handlePong(client as never);
+    jest.advanceTimersByTime(5_000);
+    expect(client.disconnect).not.toHaveBeenCalled();
+  });
+});
+
+describe('AlertsGateway alerts:ack', () => {
+  let gateway: AlertsGateway;
+  let alertEvents: ReturnType<typeof makeFakeAlertEvents>;
+
+  beforeEach(() => {
+    alertEvents = makeFakeAlertEvents();
+    gateway = new AlertsGateway(
+      { authenticate: jest.fn() } as never,
+      alertEvents as never,
+    );
+    const emit = jest.fn();
+    gateway.server = { to: jest.fn().mockReturnValue({ emit }) } as never;
+  });
+
+  it('acknowledges an event and broadcasts alerts:acknowledged', async () => {
+    const acked = { id: 'e1', deviceId: 'd1', acknowledgedAt: new Date() };
+    alertEvents.acknowledge.mockResolvedValue(acked);
+    const client = makeClient();
+    const res = await gateway.handleAck(client as never, { eventId: 'e1' });
+    expect(res).toEqual({ acknowledged: 'e1' });
+    expect(alertEvents.acknowledge).toHaveBeenCalledWith('e1');
+    expect(gateway.server.to).toHaveBeenCalledWith([
+      'alerts:all',
+      'alerts:device:d1',
+    ]);
+  });
+
+  it('returns not_found for a missing event', async () => {
+    alertEvents.acknowledge.mockResolvedValue(null);
+    const client = makeClient();
+    const res = await gateway.handleAck(client as never, { eventId: 'missing' });
+    expect(res).toEqual({ error: 'not_found' });
+  });
+
+  it('returns invalid_event_id when eventId is missing', async () => {
+    const client = makeClient();
+    const res = await gateway.handleAck(client as never, {} as never);
+    expect(res).toEqual({ error: 'invalid_event_id' });
   });
 });
