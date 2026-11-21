@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { WsAuthService } from '../auth/ws-auth.service';
+import { AlertEventsService } from './alert-events.service';
 import { AlertEvent } from './entities/alert-event.entity';
 
 const ALL_ROOM = 'alerts:all';
@@ -25,7 +26,10 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly wsAuth: WsAuthService) {}
+  constructor(
+    private readonly wsAuth: WsAuthService,
+    private readonly alertEvents: AlertEventsService,
+  ) {}
 
   async handleConnection(client: Socket) {
     const user = await this.wsAuth.authenticate(client);
@@ -101,6 +105,28 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     await client.join(ALL_ROOM);
     return { subscribed: [] };
+  }
+
+  @SubscribeMessage('alerts:ack')
+  async handleAck(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { eventId?: string },
+  ) {
+    const eventId = body?.eventId;
+    if (!eventId || typeof eventId !== 'string') {
+      return { error: 'invalid_event_id' };
+    }
+    const event = await this.alertEvents.acknowledge(eventId);
+    if (!event) return { error: 'not_found' };
+    if (event.acknowledgedAt) {
+      const rooms: string[] = [ALL_ROOM];
+      if (event.deviceId) rooms.push(deviceRoom(event.deviceId));
+      this.server.to(rooms).emit('alerts:acknowledged', {
+        eventId: event.id,
+        acknowledgedAt: event.acknowledgedAt,
+      });
+    }
+    return { acknowledged: event.id };
   }
 
   broadcastAlert(event: AlertEvent): void {
