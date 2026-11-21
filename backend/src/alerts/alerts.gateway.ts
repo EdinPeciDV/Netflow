@@ -16,6 +16,8 @@ const DEVICE_ROOM_PREFIX = 'alerts:device:';
 const MAX_SUBSCRIPTIONS = 50;
 const SUBSCRIBE_LIMIT = 10;
 const SUBSCRIBE_WINDOW_MS = 10_000;
+const HEARTBEAT_INTERVAL_MS = 30_000;
+const PONG_TIMEOUT_MS = 5_000;
 const deviceRoom = (id: string) => `${DEVICE_ROOM_PREFIX}${id}`;
 
 @WebSocketGateway({ cors: { origin: '*' }, namespace: '/alerts' })
@@ -34,12 +36,35 @@ export class AlertsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     client.data.user = user;
+    client.data.pongReceived = true;
     await client.join(ALL_ROOM);
     console.log(`Alerts WS client connected: ${client.id} (${user.email})`);
+    this.scheduleHeartbeat(client);
   }
 
   handleDisconnect(client: Socket) {
+    clearTimeout(client.data.pingTimer as ReturnType<typeof setTimeout>);
+    clearTimeout(client.data.pongTimer as ReturnType<typeof setTimeout>);
     console.log(`Alerts WS client disconnected: ${client.id}`);
+  }
+
+  private scheduleHeartbeat(client: Socket): void {
+    client.data.pingTimer = setTimeout(() => {
+      client.data.pongReceived = false;
+      client.emit('gateway:ping');
+      client.data.pongTimer = setTimeout(() => {
+        if (!client.data.pongReceived) {
+          console.log(`Alerts WS client timed out (no pong): ${client.id}`);
+          client.disconnect(true);
+        }
+      }, PONG_TIMEOUT_MS);
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  @SubscribeMessage('gateway:pong')
+  handlePong(@ConnectedSocket() client: Socket) {
+    client.data.pongReceived = true;
+    this.scheduleHeartbeat(client);
   }
 
   @SubscribeMessage('alerts:subscribe')
