@@ -1,19 +1,37 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Alerts from './pages/Alerts';
 import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
+import Login from './pages/Login';
+import type { ReactNode } from 'react';
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { token } = useAuth();
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+}
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="devices" element={<Devices />} />
-          <Route path="alerts" element={<Alerts />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            element={
+              <RequireAuth>
+                <Layout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="devices" element={<Devices />} />
+            <Route path="alerts" element={<Alerts />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -49,6 +49,24 @@
   font-weight: 600;
 }
 
+.logout-btn {
+  margin-top: auto;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: 1px solid #2a2a40;
+  border-radius: 6px;
+  color: #b0b0c0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 .main-content {
   flex: 1;
   padding: 2rem;

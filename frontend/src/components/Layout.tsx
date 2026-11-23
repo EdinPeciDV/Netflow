@@ -1,7 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Layout.css';
 
 export default function Layout() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -11,6 +20,9 @@ export default function Layout() {
           <NavLink to="/devices">Devices</NavLink>
           <NavLink to="/alerts">Alerts</NavLink>
         </nav>
+        <button className="logout-btn" onClick={handleLogout}>
+          Sign out
+        </button>
       </aside>
       <main className="main-content">
         <Outlet />
