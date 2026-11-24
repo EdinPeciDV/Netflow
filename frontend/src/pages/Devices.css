@@ -64,3 +64,76 @@
   color: #888;
   font-size: 0.85rem;
 }
+
+.register-form {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: flex-end;
+}
+
+.register-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.register-form label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.register-form input {
+  background: #1a1a2e;
+  border: 1px solid #2a2a40;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.register-form input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.btn-primary {
+  background: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #535bf2;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid #ef444480;
+  color: #f87171;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.form-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}

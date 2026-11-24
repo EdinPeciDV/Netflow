@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import api from '../api/client';
 import './Devices.css';
 
@@ -30,6 +30,11 @@ export default function Devices() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [name, setName] = useState('');
+  const [ipAddress, setIpAddress] = useState('');
+  const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     api
@@ -48,6 +53,31 @@ export default function Devices() {
     };
   }, []);
 
+  async function handleRegister(e: FormEvent) {
+    e.preventDefault();
+    setFormError('');
+    setSubmitting(true);
+    try {
+      const res = await api.post<Device>('/devices', { name, ipAddress });
+      setDevices((prev) => [...prev, res.data]);
+      setName('');
+      setIpAddress('');
+    } catch {
+      setFormError('Failed to register device');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await api.delete(`/devices/${id}`);
+      setDevices((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      setError('Failed to delete device');
+    }
+  }
+
   if (error) return <div className="devices-error">{error}</div>;
 
   return (
@@ -56,8 +86,33 @@ export default function Devices() {
         <h2>Devices</h2>
       </div>
 
+      <form className="register-form" onSubmit={handleRegister}>
+        <div className="field">
+          <label>Name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Core Router"
+            required
+          />
+        </div>
+        <div className="field">
+          <label>IP Address</label>
+          <input
+            value={ipAddress}
+            onChange={(e) => setIpAddress(e.target.value)}
+            placeholder="192.168.1.1"
+            required
+          />
+        </div>
+        <button className="btn-primary" type="submit" disabled={submitting}>
+          {submitting ? 'Adding…' : 'Add Device'}
+        </button>
+      </form>
+      {formError && <p className="form-error">{formError}</p>}
+
       {loading ? (
-        <p style={{ color: '#888' }}>Loading…</p>
+        <p style={{ color: '#888', marginTop: '1rem' }}>Loading…</p>
       ) : devices.length === 0 ? (
         <div className="devices-empty">
           <p>No devices registered yet.</p>
@@ -70,6 +125,7 @@ export default function Devices() {
               <th>Name</th>
               <th>IP Address</th>
               <th>Last Seen</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -86,6 +142,14 @@ export default function Devices() {
                   <span className="last-seen">
                     {formatLastSeen(d.lastSeenAt)}
                   </span>
+                </td>
+                <td>
+                  <button
+                    className="btn-danger"
+                    onClick={() => handleDelete(d.id)}
+                  >
+                    Remove
+                  </button>
                 </td>
               </tr>
             ))}
