@@ -1,0 +1,66 @@
+.devices-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.devices-table th,
+.devices-table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #2a2a40;
+}
+
+.devices-table th {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #1a1a2e;
+}
+
+.devices-table tr:hover td {
+  background: #1a1a2e;
+  cursor: pointer;
+}
+
+.device-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.device-status.online {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e80;
+}
+
+.device-status.offline {
+  background: #6b7280;
+}
+
+.devices-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.devices-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.devices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.last-seen {
+  color: #888;
+  font-size: 0.85rem;
+}
