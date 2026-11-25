@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import TopTalkers from '../components/TopTalkers';
 import TrafficChart from '../components/TrafficChart';
 import './Dashboard.css';
 
@@ -92,6 +93,7 @@ export default function Dashboard() {
         />
       </div>
       <TrafficChart />
+      <TopTalkers />
     </div>
   );
 }

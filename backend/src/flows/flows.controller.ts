@@ -29,4 +29,9 @@ export class FlowsController {
   aggregate(@Query() query: AggregateFlowsDto) {
     return this.flowsService.aggregate(query);
   }
+
+  @Get('top-talkers')
+  topTalkers(@Query('limit') limit?: string) {
+    return this.flowsService.topTalkers(limit ? parseInt(limit, 10) : undefined);
+  }
 }

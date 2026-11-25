@@ -169,4 +169,40 @@ export class FlowsService {
 
     return { received: records.length };
   }
+
+  async topTalkers(limit = 10): Promise<
+    { ip: string; direction: 'src' | 'dst'; totalBytes: string; flowCount: number }[]
+  > {
+    const srcRows = await this.flowsRepo
+      .createQueryBuilder('fr')
+      .select('fr."srcIp"', 'ip')
+      .addSelect("'src'", 'direction')
+      .addSelect('SUM(fr.bytes)', 'totalBytes')
+      .addSelect('COUNT(fr.id)', 'flowCount')
+      .groupBy('fr."srcIp"')
+      .orderBy('"totalBytes"', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    const dstRows = await this.flowsRepo
+      .createQueryBuilder('fr')
+      .select('fr."dstIp"', 'ip')
+      .addSelect("'dst'", 'direction')
+      .addSelect('SUM(fr.bytes)', 'totalBytes')
+      .addSelect('COUNT(fr.id)', 'flowCount')
+      .groupBy('fr."dstIp"')
+      .orderBy('"totalBytes"', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    return [...srcRows, ...dstRows]
+      .sort((a, b) => Number(BigInt(b.totalBytes) - BigInt(a.totalBytes)))
+      .slice(0, limit)
+      .map((r) => ({
+        ip: r.ip,
+        direction: r.direction,
+        totalBytes: r.totalBytes ?? '0',
+        flowCount: parseInt(r.flowCount, 10),
+      }));
+  }
 }
