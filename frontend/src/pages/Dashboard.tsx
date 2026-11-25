@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import TrafficChart from '../components/TrafficChart';
 import './Dashboard.css';
 
 interface Stats {
@@ -90,6 +91,7 @@ export default function Dashboard() {
           value={alertCount ?? '—'}
         />
       </div>
+      <TrafficChart />
     </div>
   );
 }
