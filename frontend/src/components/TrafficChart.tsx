@@ -43,7 +43,11 @@ function formatTime(iso: string, bucket: BucketSize): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export default function TrafficChart() {
+interface TrafficChartProps {
+  deviceId?: string;
+}
+
+export default function TrafficChart({ deviceId }: TrafficChartProps = {}) {
   const [data, setData] = useState<ChartPoint[]>([]);
   const [bucket, setBucket] = useState<BucketSize>('hour');
   const [metric, setMetric] = useState<'bytes' | 'flows' | 'packets'>('bytes');
@@ -55,7 +59,7 @@ export default function TrafficChart() {
     async function load() {
       try {
         const res = await api.get<Bucket[]>('/flows/aggregate', {
-          params: { bucket },
+          params: { bucket, ...(deviceId ? { deviceId } : {}) },
         });
         if (cancelled) return;
         setData(
@@ -74,7 +78,7 @@ export default function TrafficChart() {
 
     load();
     return () => { cancelled = true; };
-  }, [bucket]);
+  }, [bucket, deviceId]);
 
   const colors: Record<string, string> = {
     bytes: '#6366f1',

@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Alerts from './pages/Alerts';
 import Dashboard from './pages/Dashboard';
+import DeviceDetail from './pages/DeviceDetail';
 import Devices from './pages/Devices';
 import Login from './pages/Login';
 import type { ReactNode } from 'react';
@@ -28,6 +29,7 @@ export default function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="devices" element={<Devices />} />
+            <Route path="devices/:id" element={<DeviceDetail />} />
             <Route path="alerts" element={<Alerts />} />
           </Route>
         </Routes>

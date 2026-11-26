@@ -1,4 +1,5 @@
 import { useEffect, useState, FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import './Devices.css';
 
@@ -26,6 +27,7 @@ function formatLastSeen(lastSeen: string | null): string {
 }
 
 export default function Devices() {
+  const navigate = useNavigate();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -130,7 +132,7 @@ export default function Devices() {
           </thead>
           <tbody>
             {devices.map((d) => (
-              <tr key={d.id}>
+              <tr key={d.id} onClick={() => navigate(`/devices/${d.id}`)}>
                 <td>
                   <span
                     className={`device-status ${isOnline(d.lastSeenAt) ? 'online' : 'offline'}`}
@@ -146,7 +148,7 @@ export default function Devices() {
                 <td>
                   <button
                     className="btn-danger"
-                    onClick={() => handleDelete(d.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(d.id); }}
                   >
                     Remove
                   </button>
