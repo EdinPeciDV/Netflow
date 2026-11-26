@@ -5,6 +5,7 @@ import Alerts from './pages/Alerts';
 import Dashboard from './pages/Dashboard';
 import DeviceDetail from './pages/DeviceDetail';
 import Devices from './pages/Devices';
+import Flows from './pages/Flows';
 import Login from './pages/Login';
 import type { ReactNode } from 'react';
 
@@ -30,6 +31,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="devices" element={<Devices />} />
             <Route path="devices/:id" element={<DeviceDetail />} />
+            <Route path="flows" element={<Flows />} />
             <Route path="alerts" element={<Alerts />} />
           </Route>
         </Routes>

@@ -1,0 +1,82 @@
+.flows-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.flows-table th,
+.flows-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #2a2a40;
+}
+
+.flows-table th {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #1a1a2e;
+}
+
+.flows-table tr:hover td {
+  background: #1a1a2e;
+}
+
+.flow-time {
+  color: #888;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.flow-addr {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.flows-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.flows-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.flows-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+}
+
+.page-info {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.btn-secondary {
+  background: #1a1a2e;
+  border: 1px solid #2a2a40;
+  color: #ccc;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: #646cff;
+  color: #fff;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

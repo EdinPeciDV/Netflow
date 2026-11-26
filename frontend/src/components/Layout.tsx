@@ -18,6 +18,7 @@ export default function Layout() {
         <nav>
           <NavLink to="/" end>Dashboard</NavLink>
           <NavLink to="/devices">Devices</NavLink>
+          <NavLink to="/flows">Flows</NavLink>
           <NavLink to="/alerts">Alerts</NavLink>
         </nav>
         <button className="logout-btn" onClick={handleLogout}>
