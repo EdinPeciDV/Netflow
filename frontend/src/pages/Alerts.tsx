@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../api/client';
+import { useSocket } from '../hooks/useSocket';
 import './Alerts.css';
 
 interface AlertEvent {
@@ -31,6 +32,8 @@ export default function Alerts() {
   const [events, setEvents] = useState<AlertEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [acking, setAcking] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<'all' | 'active' | 'acked'>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -50,21 +53,87 @@ export default function Alerts() {
     };
   }, []);
 
+  const onTriggered = useCallback((ev: AlertEvent) => {
+    setEvents((prev) => [ev, ...prev]);
+  }, []);
+
+  const onAcknowledged = useCallback(
+    (data: { eventId: string; acknowledgedAt: string }) => {
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === data.eventId
+            ? { ...ev, acknowledgedAt: data.acknowledgedAt }
+            : ev,
+        ),
+      );
+      setAcking((prev) => {
+        const next = new Set(prev);
+        next.delete(data.eventId);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const listeners = useMemo(
+    () => ({
+      'alerts:triggered': onTriggered,
+      'alerts:acknowledged': onAcknowledged,
+    }),
+    [onTriggered, onAcknowledged],
+  );
+
+  const socket = useSocket('/alerts', listeners);
+
+  const handleAck = (eventId: string) => {
+    if (!socket || acking.has(eventId)) return;
+    setAcking((prev) => new Set(prev).add(eventId));
+    socket.emit('alerts:ack', { eventId });
+  };
+
+  const filtered = useMemo(() => {
+    if (filter === 'active') return events.filter((e) => !e.acknowledgedAt);
+    if (filter === 'acked') return events.filter((e) => e.acknowledgedAt);
+    return events;
+  }, [events, filter]);
+
+  const activeCt = events.filter((e) => !e.acknowledgedAt).length;
+
   if (error) return <div className="alerts-error">{error}</div>;
 
   return (
     <div>
-      <h2>Alerts</h2>
+      <div className="alerts-header">
+        <h2>
+          Alerts
+          {activeCt > 0 && <span className="alerts-count">{activeCt}</span>}
+        </h2>
+        <div className="alerts-filters">
+          {(['all', 'active', 'acked'] as const).map((f) => (
+            <button
+              key={f}
+              className={`filter-btn ${filter === f ? 'active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === 'all' ? 'All' : f === 'active' ? 'Active' : 'Acknowledged'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {loading ? (
         <p style={{ color: '#888' }}>Loading…</p>
-      ) : events.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="alerts-empty">
-          <p>No alert events yet.</p>
+          <p>
+            {filter === 'all'
+              ? 'No alert events yet.'
+              : `No ${filter} alerts.`}
+          </p>
         </div>
       ) : (
         <div className="alerts-list">
-          {events.map((ev) => (
+          {filtered.map((ev) => (
             <div
               key={ev.id}
               className={`alert-card ${ev.acknowledgedAt ? 'acked' : 'unacked'}`}
@@ -79,11 +148,19 @@ export default function Alerts() {
                 </span>
                 <span className="alert-time">{formatTime(ev.createdAt)}</span>
               </div>
-              <span
-                className={`alert-badge ${ev.acknowledgedAt ? 'resolved' : 'active'}`}
-              >
-                {ev.acknowledgedAt ? 'Acked' : 'Active'}
-              </span>
+              <div className="alert-actions">
+                {!ev.acknowledgedAt ? (
+                  <button
+                    className="ack-btn"
+                    disabled={acking.has(ev.id)}
+                    onClick={() => handleAck(ev.id)}
+                  >
+                    {acking.has(ev.id) ? 'Acking…' : 'Acknowledge'}
+                  </button>
+                ) : (
+                  <span className="alert-badge resolved">Acked</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
