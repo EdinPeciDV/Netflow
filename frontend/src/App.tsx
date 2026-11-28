@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AlertRules from './pages/AlertRules';
 import Alerts from './pages/Alerts';
 import Dashboard from './pages/Dashboard';
 import DeviceDetail from './pages/DeviceDetail';
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="devices/:id" element={<DeviceDetail />} />
             <Route path="flows" element={<Flows />} />
             <Route path="alerts" element={<Alerts />} />
+            <Route path="alert-rules" element={<AlertRules />} />
           </Route>
         </Routes>
       </BrowserRouter>

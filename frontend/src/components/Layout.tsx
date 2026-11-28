@@ -20,6 +20,7 @@ export default function Layout() {
           <NavLink to="/devices">Devices</NavLink>
           <NavLink to="/flows">Flows</NavLink>
           <NavLink to="/alerts">Alerts</NavLink>
+          <NavLink to="/alert-rules">Alert Rules</NavLink>
         </nav>
         <button className="logout-btn" onClick={handleLogout}>
           Sign out
