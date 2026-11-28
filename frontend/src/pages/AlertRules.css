@@ -1,0 +1,169 @@
+.rules-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.rules-table th,
+.rules-table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #2a2a40;
+}
+
+.rules-table th {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #1a1a2e;
+}
+
+.rules-table tr:hover td {
+  background: #1a1a2e;
+}
+
+.disabled-row td {
+  opacity: 0.5;
+}
+
+.toggle-btn {
+  border: none;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+.toggle-btn.on {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.toggle-btn.off {
+  background: rgba(107, 114, 128, 0.2);
+  color: #6b7280;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-edit {
+  background: transparent;
+  border: 1px solid #646cff80;
+  color: #818cf8;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: rgba(100, 108, 255, 0.15);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #2a2a40;
+  color: #888;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: #1a1a2e;
+}
+
+.rule-form {
+  background: #1a1a2e;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.rule-form h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.rule-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rule-form label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rule-form input,
+.rule-form select {
+  background: #12121e;
+  border: 1px solid #2a2a40;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.rule-form input:focus,
+.rule-form select:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.toggle-label input[type='checkbox'] {
+  width: auto;
+}
+
+.rules-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.rules-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
